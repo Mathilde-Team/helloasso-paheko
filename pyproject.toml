@@ -68,3 +68,25 @@ exclude = [
     "build",
     "dist"
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+addopts = "-ra"
+
+[tool.coverage.run]
+# Couverture des branches obligatoire (SOCLE.md §4).
+branch = true
+# Code mesuré : tout le Python du dépôt (scripts applicatifs et scripts du
+# socle) ; l'interface compte, jamais exclue pour atteindre le seuil. Les
+# tests eux-mêmes et l'environnement virtuel ne sont pas du code livré.
+source = ["."]
+omit = ["tests/*", ".venv/*"]
+
+[tool.coverage.report]
+# Mesure du jour au démarrage (SOCLE.md §4) : aucun test applicatif encore,
+# seuil calé sur la mesure pour éviter toute régression, l'issue #5 le relève
+# par paliers jusqu'à 95 % (lignes et branches).
+fail_under = 0
+show_missing = true
+skip_covered = false
