@@ -1,0 +1,25 @@
+[helloasso]
+# Replace these placeholders with the settings for your HelloAsso integration.
+base_url = "https://api.helloasso.com/v5"
+authorize_url = "https://replace-with-helloasso-authorize-url"
+token_url = "https://replace-with-helloasso-token-url"
+redirect_uri = "https://replace-with-your-redirect-uri"
+org_slug = "your-organization-slug"
+
+[paheko]
+base_url = "https://your-paheko.example.org"
+data_base = ""
+db_filename = ""
+
+[backups]
+sqlite = "./backups/sqlite"
+zip = "./backups/zip"
+
+[files]
+cashouts_csv = "./cashouts.csv"
+token_helloasso = "token-helloasso.json"
+non_synced_dir = "./non_synced"
+
+[ofx]
+account_debit = "512"
+account_credit = "706"

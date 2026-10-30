@@ -1,0 +1,70 @@
+[tool.poetry]
+name = "Helloasso-Paheko"
+version = "0.1.0"
+description = "Outil de synchronisation entre Helloasso et Paheko"
+authors = ["Transcende"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11,<3.14"
+httpx = "^0.27.0"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+email-validator = "^2.0.0"
+tqdm = "^4.66.1"
+aiofiles = "^23.2.1"
+rich = "^13.6.0"
+loguru = "^0.7.3"
+tomli-w = "^1.0.0"
+authlib = "^1.3.0"
+playwright = "^1.55.0"
+ofxtools = "^0.9.5"
+pdfplumber = "^0.11.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.1"
+black = "^23.7.0"
+pylint = "^2.17.5"
+mypy = "^1.5.1"
+flake8 = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.pylint.messages_control]
+disable = ["C0111", "C0103", "C0303", "W0621", "R0903"]
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = [
+    "E203",
+    "W503",
+    "E402",
+    "E501",
+    "E722"
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist"
+]
