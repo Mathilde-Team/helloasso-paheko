@@ -1,0 +1,51 @@
+# CI du socle Mathilde-Team. Le job « Qualité (lint, tests) » est un check
+# requis sur main et dev (.github/branch-protection/*.json) : garder son nom.
+# Dépôt géré par Poetry (Python 3.13, .python-version) : les tests du socle
+# n'importent pas les dépendances applicatives, le job utilise donc des
+# dépendances éphémères figées (précédent qos-audit, SOCLE §4 : les versions
+# ne montent que volontairement). pytest 7.4 : la version du groupe dev du
+# poetry. Le seuil de couverture est lu dans pyproject.toml
+# ([tool.coverage.report] fail_under) : la commande ne recopie aucune valeur.
+name: CI
+
+"on":
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Qualité (lint, tests)
+    runs-on: ${{ fromJSON(vars.RUNS_ON_LINUX || '{"group":"maison","labels":["self-hosted","linux"]}') }}
+    # Leçon AsyncRdp4#59 / SwitchCapture#98 : tout job borné dans le temps.
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v7
+
+      - name: Installation de uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Installation de Python
+        run: uv python install 3.13
+
+      - name: Lint YAML (yamllint --strict)
+        run: uvx yamllint==1.38.0 --strict -c .yamllint.yaml .
+
+      - name: Syntaxe des scripts Python
+        run: uv run --no-project --python 3.13 python -m py_compile scripts/*.py
+
+      # Tests et couverture (SOCLE.md §4) : branches comprises (branch = true
+      # dans pyproject.toml) ; mesure du jour : 0 % de code applicatif testé,
+      # l'issue #5 relève le seuil par paliers jusqu'à 95 %.
+      - name: Tests et couverture (seuil lu dans pyproject.toml)
+        run: >
+          uv run --no-project --python 3.13
+          --with pytest==7.4.4 --with pytest-cov==5.0.0 --with loguru==0.7.3
+          pytest --cov --cov-report=term-missing
