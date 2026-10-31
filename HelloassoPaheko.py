@@ -682,8 +682,12 @@ class PahekoAPIClient:
             logger.debug("Activité '{}' trouvée dans le cache", activity_label)
             return self.activities_cache[cache_key]
 
-        # Rechercher l'activité existante via SQL
-        sql_query = f"SELECT id, label FROM services WHERE label LIKE '%{activity_label}%' LIMIT 1"
+        # Rechercher l'activité existante via SQL (apostrophes échappées
+        # pour ne pas casser la requête sur un libellé qui en contient).
+        label_like = activity_label.replace("'", "''")
+        sql_query = (
+            f"SELECT id, label FROM services WHERE label LIKE '%{label_like}%' LIMIT 1"
+        )
         try:
             result = self.get_sql(sql_query, mode="direct")
             if result.get("results") and len(result["results"]) > 0:
@@ -694,8 +698,11 @@ class PahekoAPIClient:
         except Exception as e:
             logger.exception(f"Erreur lors de la recherche d'activité : {e}")
 
-        # Si l'activité n'existe pas, la créer via l'API SQL de Paheko
-        # logger.info("Création d'une nouvelle activité pour l'événement : {}", activity_label)
+        # Si l'activité n'existe pas, la créer réellement via l'API SQL de
+        # Paheko (INSERT sur la base locale) puis relire pour obtenir l'id.
+        # Avant (issue #10) : un second SELECT à la place de l'INSERT —
+        # aucune activité n'était jamais créée, le fallback {id: None}
+        # faisait ensuite refuser l'inscription par attach_users_to_activity.
         label = activity_label.replace("'", "''")
 
         try:
@@ -706,12 +713,23 @@ class PahekoAPIClient:
                 logger.info("Activité créée/trouvée : {}", activity)
                 self.activities_cache[activity_label] = activity
                 return activity
-            else:
-                # Fallback : renvoyer une structure minimale dans le cache
-                activity = {"id": None, "label": activity_label}
+
+            insert_sql = f"INSERT INTO services (label) VALUES ('{label}')"
+            self.get_sql(insert_sql, mode="direct")
+            logger.info("Activité créée : {}", activity_label)
+
+            # Relire pour récupérer l'id attribué
+            result = self.get_sql(select_sql, mode="direct")
+            if result.get("results") and len(result["results"]) > 0:
+                activity = result["results"][0]
                 self.activities_cache[activity_label] = activity
-                logger.warning("Activité créée en cache mais aucun id retourné par l'API SQL.")
                 return activity
+
+            # Repli : structure minimale dans le cache
+            activity = {"id": None, "label": activity_label}
+            self.activities_cache[activity_label] = activity
+            logger.warning("Activité insérée mais introuvable à la relecture, aucun id retourné par l'API SQL.")
+            return activity
         except Exception as e:
             logger.exception(
                 "Erreur lors de la création/récupération de l'activité {}: {}", activity_label, e
@@ -1064,6 +1082,16 @@ class PahekoAPIClient:
             if key in new_member_data:
                 new_member_data.pop(key)
 
+        def est_exploitable(valeur) -> bool:
+            """Une valeur HelloAsso n'écrase une donnée Paheko que si elle est exploitable."""
+            texte = "" if valeur is None else str(valeur).strip()
+            return (
+                valeur is not None
+                and texte != ""
+                and texte.lower() != "none"
+                and not texte.startswith("(")
+            )
+
         updateneed = False
         for key, new_value in hello_member_data.items():
 
@@ -1075,6 +1103,10 @@ class PahekoAPIClient:
                             key,
                             new_value,
                         )
+                        # Valeur vide sur un champ inconnu de Paheko : ne pas
+                        # l'envoyer non plus (rien à écraser, rien à créer).
+                        if not est_exploitable(new_value):
+                            new_member_data.pop(key, None)
                     else:
                         existing_value = existing_member.get(key)
                         if str(existing_value).strip() != str(new_value).strip():
@@ -1084,16 +1116,25 @@ class PahekoAPIClient:
                                 existing_value,
                                 new_value,
                             )
-                            if (
-                                new_value is not None
-                                or new_value != ""
-                                or new_value != "None"
-                                or new_value.strip()[0] != "("
-                            ):
+                            # N'écraser la donnée Paheko que si la valeur
+                            # HelloAsso est exploitable : None, chaîne vide,
+                            # "None" ou un placeholder entre parenthèses ne
+                            # doivent jamais effacer une donnée existante
+                            # (perte de données constatée, issue #10).
+                            if est_exploitable(new_value):
                                 new_member_data[key] = new_value
+                                updateneed = True
                             else:
-                                new_member_data[key] = existing_value
-                            updateneed = True
+                                # Retirer aussi la valeur vide du payload :
+                                # new_member_data part pré-rempli avec les
+                                # données HelloAsso — la laisser l'enverrait
+                                # quand même à Paheko et écraserait la donnée.
+                                new_member_data.pop(key, None)
+                                logger.info(
+                                    "Valeur non exploitable pour '{}' ('{}'), la donnée existante est conservée",
+                                    key,
+                                    new_value,
+                                )
                         else:
                             logger.debug(
                                 "Aucune différence pour la clé '{}': existant='{}', nouveau='{}'",
@@ -1105,12 +1146,14 @@ class PahekoAPIClient:
         for key, existing_value in existing_member.items():
             if key not in list_of_keys_to_ignore_paheko:
                 if key not in hello_member_data:
+                    # Champ géré par Paheko que HelloAsso ne fournit pas :
+                    # rien à mettre à jour (l'ancien code déclenchait une
+                    # mise à jour à chaque synchronisation pour rien).
                     logger.debug(
                         "Clé '{}' absente dans les nouvelles données, existant='{}'",
                         key,
                         existing_value,
                     )
-                    updateneed = True
         return updateneed, new_member_data
 
     # @staticmethod
@@ -1397,7 +1440,9 @@ class PahekoAPIClient:
 
             try:
                 if not self.mode_simulation:
-                    # response = self.create_member(update_data)
+                    # Créer réellement le membre (avant : appel commenté,
+                    # le « Nouveau membre créé » était mensonge — issue #10).
+                    self.create_member(update_data)
                     logger.info(
                         "Nouveau membre créé: {} ({})", update_data["nom"], update_data["email"]
                     )
