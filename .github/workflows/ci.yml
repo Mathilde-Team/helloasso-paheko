@@ -1,0 +1,53 @@
+# CI du socle Mathilde-Team. Le job « Qualité (lint, tests) » est un check
+# requis sur main et dev (.github/branch-protection/*.json) : garder son nom.
+# Dépôt géré par uv (Python 3.13, .python-version) : uv.lock fige les
+# dépendances applicatives et de développement. --locked refuse un verrou
+# obsolète ; les versions ne montent que volontairement.
+# Le seuil de couverture est lu dans pyproject.toml
+# ([tool.coverage.report] fail_under) : la commande ne recopie aucune valeur.
+name: CI
+
+"on":
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Qualité (lint, tests)
+    # Repli autorisé par MISSION.md ; tous les contrôles restent identiques.
+    runs-on: ${{ fromJSON(vars.RUNS_ON_LINUX || '"ubuntu-latest"') }}
+    # Leçon AsyncRdp4#59 / SwitchCapture#98 : tout job borné dans le temps.
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v7
+
+      - name: Installation de uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Installation de Python
+        run: uv python install 3.13
+
+      - name: Installation des dépendances verrouillées
+        run: uv sync --locked --python 3.13
+
+      - name: Lint YAML (yamllint --strict)
+        run: uvx yamllint==1.38.0 --strict -c .yamllint.yaml .
+
+      - name: Syntaxe des scripts Python
+        run: uv run --locked --python 3.13 python -m py_compile scripts/*.py
+
+      # Tests et couverture (SOCLE.md §4) : branches comprises (branch = true
+      # dans pyproject.toml). Le palier existant n'est pas abaissé par la
+      # migration ; l'issue #5 le relève par paliers jusqu'à 95 %.
+      - name: Tests et couverture (seuil lu dans pyproject.toml)
+        run: >
+          uv run --locked --python 3.13
+          pytest --cov --cov-report=term-missing
