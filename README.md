@@ -6,7 +6,7 @@ statements.
 ## Requirements
 
 - Python 3.11–3.13
-- Poetry
+- uv
 - Credentials for HelloAsso and Paheko
 
 ## Local setup
@@ -14,7 +14,7 @@ statements.
 1. Install dependencies:
 
    ```sh
-   poetry install
+   uv sync --locked --python 3.13
    ```
 
 2. Create local configuration files:
@@ -47,16 +47,16 @@ Run commands from the project directory so the local configuration is found:
 The HelloAsso script accepts `--simulate` to avoid writing changes to Paheko:
 
 ```sh
-poetry run python HelloassoPaheko.py --simulate
-poetry run python OfxPaheko.py --simulation
+uv run --locked python HelloassoPaheko.py --simulate
+uv run --locked python OfxPaheko.py --simulation
 ```
 
 For OFX imports, select one file with `--file` or set the input directory with
 `--ofx-dir`:
 
 ```sh
-poetry run python OfxPaheko.py --simulation --file ./ofx/statement.ofx
-poetry run python OfxPaheko.py --simulation --ofx-dir ./ofx
+uv run --locked python OfxPaheko.py --simulation --file ./ofx/statement.ofx
+uv run --locked python OfxPaheko.py --simulation --ofx-dir ./ofx
 ```
 
 The scripts still contact their services to read data, including in simulation
