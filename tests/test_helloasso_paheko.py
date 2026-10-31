@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Tests des correctifs de l'issue #10 (HelloassoPaheko.py).
 
 Le module HelloassoPaheko importe des dépendances applicatives absentes du
