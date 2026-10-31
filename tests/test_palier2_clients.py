@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Palier 2 de couverture (issue #5) — clients Paheko et HelloAsso.
 
 Deuxième palier de couverture de ``HelloassoPaheko.py`` : méthodes de
