@@ -1,10 +1,9 @@
 # CI du socle Mathilde-Team. Le job « Qualité (lint, tests) » est un check
 # requis sur main et dev (.github/branch-protection/*.json) : garder son nom.
-# Dépôt géré par Poetry (Python 3.13, .python-version) : les tests du socle
-# n'importent pas les dépendances applicatives, le job utilise donc des
-# dépendances éphémères figées (précédent qos-audit, SOCLE §4 : les versions
-# ne montent que volontairement). pytest 7.4 : la version du groupe dev du
-# poetry. Le seuil de couverture est lu dans pyproject.toml
+# Dépôt géré par uv (Python 3.13, .python-version) : uv.lock fige les
+# dépendances applicatives et de développement. --locked refuse un verrou
+# obsolète ; les versions ne montent que volontairement.
+# Le seuil de couverture est lu dans pyproject.toml
 # ([tool.coverage.report] fail_under) : la commande ne recopie aucune valeur.
 name: CI
 
@@ -35,19 +34,19 @@ jobs:
       - name: Installation de Python
         run: uv python install 3.13
 
+      - name: Installation des dépendances verrouillées
+        run: uv sync --locked --python 3.13
+
       - name: Lint YAML (yamllint --strict)
         run: uvx yamllint==1.38.0 --strict -c .yamllint.yaml .
 
       - name: Syntaxe des scripts Python
-        run: uv run --no-project --python 3.13 python -m py_compile scripts/*.py
+        run: uv run --locked --python 3.13 python -m py_compile scripts/*.py
 
       # Tests et couverture (SOCLE.md §4) : branches comprises (branch = true
-      # dans pyproject.toml) ; mesure du jour : 10 % (OfxPaheko.py à 97 %,
-      # HelloassoPaheko.py non testé), l'issue #5 relève le seuil par paliers
-      # jusqu'à 95 %.
+      # dans pyproject.toml). Le palier existant n'est pas abaissé par la
+      # migration ; l'issue #5 le relève par paliers jusqu'à 95 %.
       - name: Tests et couverture (seuil lu dans pyproject.toml)
         run: >
-          uv run --no-project --python 3.13
-          --with pytest==7.4.4 --with pytest-cov==5.0.0 --with loguru==0.7.3
-          --with ofxtools==0.9.5
+          uv run --locked --python 3.13
           pytest --cov --cov-report=term-missing
