@@ -3,6 +3,7 @@ name = "Helloasso-Paheko"
 version = "0.1.0"
 description = "Outil de synchronisation entre Helloasso et Paheko"
 authors = ["Transcende"]
+license = "GPL-3.0-or-later"
 readme = "README.md"
 package-mode = false
 
