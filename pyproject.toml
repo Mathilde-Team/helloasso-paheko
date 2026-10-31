@@ -88,12 +88,15 @@ source = ["."]
 omit = ["tests/*", ".venv/*"]
 
 [tool.coverage.report]
-# Mesure du jour (SOCLE.md §4) : 16 % — OfxPaheko.py couvert à 98 % et les
+# Mesure du jour (SOCLE.md §4) : 25 % — OfxPaheko.py couvert à 98 %, les
 # fonctions critiques de HelloassoPaheko.py (compare_member_data, get_activity,
 # ensure_member_exists, create_member, update_member, get_sql) par
-# tests/test_helloasso_paheko.py (issue #10). Seuil calé sur la mesure pour
-# éviter toute régression, l'issue #5 le relève par paliers jusqu'à 95 %
-# (lignes et branches).
-fail_under = 16
+# tests/test_helloasso_paheko.py (issue #10), puis palier 2 de l'issue #5
+# (31/10/2026) : clients Paheko et HelloAsso (recherche de membres, retry HTTP,
+# catégories, journaux, transactions, get_sql direct SQLite, jetons OAuth2,
+# _make_request) par tests/test_palier2_clients.py — HelloassoPaheko.py
+# 7 % → 16 %. Seuil calé sur la mesure pour éviter toute régression,
+# l'issue #5 le relève par paliers jusqu'à 95 % (lignes et branches).
+fail_under = 24
 show_missing = true
 skip_covered = false
