@@ -72,7 +72,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["scripts"]
+pythonpath = ["scripts", "."]
 addopts = "-ra"
 
 [tool.coverage.run]
@@ -85,9 +85,10 @@ source = ["."]
 omit = ["tests/*", ".venv/*"]
 
 [tool.coverage.report]
-# Mesure du jour au démarrage (SOCLE.md §4) : aucun test applicatif encore,
-# seuil calé sur la mesure pour éviter toute régression, l'issue #5 le relève
-# par paliers jusqu'à 95 % (lignes et branches).
-fail_under = 0
+# Mesure du jour (SOCLE.md §4) : 10 % — OfxPaheko.py couvert à 97 % par
+# tests/test_ofx_paheko.py, HelloassoPaheko.py pas encore testé. Seuil calé
+# sur la mesure pour éviter toute régression, l'issue #5 le relève par paliers
+# jusqu'à 95 % (lignes et branches).
+fail_under = 10
 show_missing = true
 skip_covered = false

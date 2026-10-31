@@ -42,10 +42,12 @@ jobs:
         run: uv run --no-project --python 3.13 python -m py_compile scripts/*.py
 
       # Tests et couverture (SOCLE.md §4) : branches comprises (branch = true
-      # dans pyproject.toml) ; mesure du jour : 0 % de code applicatif testé,
-      # l'issue #5 relève le seuil par paliers jusqu'à 95 %.
+      # dans pyproject.toml) ; mesure du jour : 10 % (OfxPaheko.py à 97 %,
+      # HelloassoPaheko.py non testé), l'issue #5 relève le seuil par paliers
+      # jusqu'à 95 %.
       - name: Tests et couverture (seuil lu dans pyproject.toml)
         run: >
           uv run --no-project --python 3.13
           --with pytest==7.4.4 --with pytest-cov==5.0.0 --with loguru==0.7.3
+          --with ofxtools==0.9.5
           pytest --cov --cov-report=term-missing
