@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Tests du module OfxPaheko (issue #5, palier 1).
 
 Le client Paheko (HelloassoPaheko.PahekoAPIClient) est remplacé par une
