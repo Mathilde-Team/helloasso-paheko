@@ -20,7 +20,8 @@ permissions:
 jobs:
   quality:
     name: Qualité (lint, tests)
-    runs-on: ${{ fromJSON(vars.RUNS_ON_LINUX || '{"group":"maison","labels":["self-hosted","linux"]}') }}
+    # Repli autorisé par MISSION.md ; tous les contrôles restent identiques.
+    runs-on: ${{ fromJSON(vars.RUNS_ON_LINUX || '"ubuntu-latest"') }}
     # Leçon AsyncRdp4#59 / SwitchCapture#98 : tout job borné dans le temps.
     timeout-minutes: 15
 
