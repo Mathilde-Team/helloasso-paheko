@@ -3131,20 +3131,21 @@ class HelloAssoHTTPClient:
                 logger.exception(f"Impossible de récupérer organization_slug: {e}")
                 org_slug = self.config.get("helloasso", {}).get("org_slug")
 
-            year_id = paheko_client.get_current_year_id(
-                self.convert_to_datetime(order["date"]), org_slug
-            )
+            # L'exercice doit exister (ValueError sinon, commande non
+            # synchronisée) ; transaction_exists cherche ensuite la référence
+            # sur toutes les années (issue #29).
+            paheko_client.get_current_year_id(self.convert_to_datetime(order["date"]), org_slug)
 
             # Vérifier la transaction principale
             main_reference = f"HelloAsso {order['id']}"
-            if not paheko_client.transaction_exists(main_reference, year_id):
+            if not paheko_client.transaction_exists(main_reference):
                 logger.info("Transaction principale {} non trouvée", main_reference)
                 return False
 
             # Vérifier chaque ligne/item
             for item in order.get("items", []):
                 item_reference = f"HelloAsso {item['id']}"
-                if not paheko_client.transaction_exists(item_reference, year_id):
+                if not paheko_client.transaction_exists(item_reference):
                     logger.info("Transaction d'item {} non trouvée", item_reference)
                     return False
 
