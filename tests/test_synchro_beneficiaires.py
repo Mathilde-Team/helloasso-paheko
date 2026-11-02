@@ -25,7 +25,7 @@ class PahekoFaux:
     def get_current_year_id(self, date_commande, org_slug):
         return 1
 
-    def transaction_exists(self, reference, year_id):
+    def transaction_exists(self, reference):
         return True
 
     def _get_serviceLabel(self, commande):

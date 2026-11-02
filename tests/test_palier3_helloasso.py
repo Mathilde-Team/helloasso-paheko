@@ -518,7 +518,7 @@ class PahekoFaux:
         self.org_slug = org_slug
         return 3
 
-    def transaction_exists(self, reference, year_id):
+    def transaction_exists(self, reference):
         return reference in self.transactions
 
     def _get_serviceLabel(self, commande):

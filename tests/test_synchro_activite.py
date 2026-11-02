@@ -37,7 +37,7 @@ def paheko_scripte(activites):
     client.get_sql = get_sql
     client.get_member_by_name = lambda nom: {"id": 1}
     client.get_current_year_id = lambda date_commande, org_slug: 1
-    client.transaction_exists = lambda reference, year_id: True
+    client.transaction_exists = lambda reference: True
     return client
 
 
