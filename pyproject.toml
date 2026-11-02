@@ -98,9 +98,11 @@ omit = ["tests/*", ".venv/*"]
 # 7 % → 16 %, puis palier 3 (02/11/2026) : tout HelloAssoHTTPClient hors
 # OAuth2 (construction, pagination, consolidation, cash-outs, PDF,
 # vérification de synchronisation, formulaires) par
-# tests/test_palier3_helloasso.py — total 25 % → 38 %. Seuil calé sur la
+# tests/test_palier3_helloasso.py — total 25 % → 38 %, puis palier 4 :
+# reste de PahekoAPIClient et HelloAssoPDFDownloader par
+# tests/test_palier4_paheko.py — total 38,6 % → 50,9 %. Seuil calé sur la
 # mesure pour éviter toute régression, l'issue #5 le relève par paliers
 # jusqu'à 95 % (lignes et branches).
-fail_under = 37
+fail_under = 50
 show_missing = true
 skip_covered = false
