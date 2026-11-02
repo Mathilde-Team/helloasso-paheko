@@ -665,6 +665,39 @@ class PahekoAPIClient:
         logger.info("Membre {} mis à jour avec succès.", member_id)
         return response.json()
 
+    def find_activity(self, activity_label: str) -> dict | None:
+        """
+        Recherche une activité existante dans Paheko, sans jamais la créer.
+
+        Lecture seule (cache puis ``SELECT … LIKE``) : utilisable pour une
+        vérification, contrairement à ``get_activity`` qui crée l'activité
+        absente (issue #26).
+
+        :param activity_label: Libellé de l'activité (voir ``_get_serviceLabel``).
+        :return: L'activité trouvée, ou None.
+        """
+        logger.debug("find_activity() called | activity_label={}", activity_label)
+        if activity_label in self.activities_cache:
+            logger.debug("Activité '{}' trouvée dans le cache", activity_label)
+            return self.activities_cache[activity_label]
+
+        # Apostrophes échappées pour ne pas casser la requête sur un libellé
+        # qui en contient.
+        label_like = activity_label.replace("'", "''")
+        sql_query = f"SELECT id, label FROM services WHERE label LIKE '%{label_like}%' LIMIT 1"
+        try:
+            result = self.get_sql(sql_query, mode="direct")
+            if result.get("results") and len(result["results"]) > 0:
+                activity = result["results"][0]
+                logger.info("Activité existante trouvée : {}", activity)
+                self.activities_cache[activity_label] = activity
+                logger.debug("find_activity() returning | id={}", activity.get("id"))
+                return activity
+        except Exception as e:
+            logger.exception(f"Erreur lors de la recherche d'activité : {e}")
+        logger.debug("find_activity() returning | aucune activité")
+        return None
+
     def get_activity(self, activity_label: str) -> dict:
         """
         Récupère ou crée une activité dans Paheko à partir d'un nom d'événement HelloAsso.
@@ -676,27 +709,9 @@ class PahekoAPIClient:
         :return: Dictionnaire contenant les informations de l'activité.
         """
 
-        # Vérifier le cache (avec le label adapté)
-        cache_key = activity_label
-        if cache_key in self.activities_cache:
-            logger.debug("Activité '{}' trouvée dans le cache", activity_label)
-            return self.activities_cache[cache_key]
-
-        # Rechercher l'activité existante via SQL (apostrophes échappées
-        # pour ne pas casser la requête sur un libellé qui en contient).
-        label_like = activity_label.replace("'", "''")
-        sql_query = (
-            f"SELECT id, label FROM services WHERE label LIKE '%{label_like}%' LIMIT 1"
-        )
-        try:
-            result = self.get_sql(sql_query, mode="direct")
-            if result.get("results") and len(result["results"]) > 0:
-                activity = result["results"][0]
-                logger.info("Activité existante trouvée : {}", activity)
-                self.activities_cache[cache_key] = activity
-                return activity
-        except Exception as e:
-            logger.exception(f"Erreur lors de la recherche d'activité : {e}")
+        activity = self.find_activity(activity_label)
+        if activity:
+            return activity
 
         # Si l'activité n'existe pas, la créer réellement via l'API SQL de
         # Paheko (INSERT sur la base locale) puis relire pour obtenir l'id.
@@ -3091,10 +3106,14 @@ class HelloAssoHTTPClient:
                     f"{order["payer"]["lastName"].upper()} {order["payer"]["firstName"].capitalize()} ({order["payer"]["email"]})"
                 )
 
+            # Le bénéficiaire est porté par chaque item (une commande n'a pas
+            # de clé « user » à la racine) — issue #22.
             for item in order.get("items", []):
-                if item.get("user", {}).get("email"):
+                beneficiaire = item.get("user", {})
+                if beneficiaire.get("email"):
                     noms_to_check.add(
-                        f"{order["user"]["lastName"].upper()} {order["user"]["firstName"].capitalize()}"
+                        f"{beneficiaire.get('lastName', '').upper()} "
+                        f"{beneficiaire.get('firstName', '').capitalize()}"
                     )
 
             # Vérifier l'existence des membres
@@ -3112,31 +3131,33 @@ class HelloAssoHTTPClient:
                 logger.exception(f"Impossible de récupérer organization_slug: {e}")
                 org_slug = self.config.get("helloasso", {}).get("org_slug")
 
-            year_id = paheko_client.get_current_year_id(
-                self.convert_to_datetime(order["date"]), org_slug
-            )
+            # L'exercice doit exister (ValueError sinon, commande non
+            # synchronisée) ; transaction_exists cherche ensuite la référence
+            # sur toutes les années (issue #29).
+            paheko_client.get_current_year_id(self.convert_to_datetime(order["date"]), org_slug)
 
             # Vérifier la transaction principale
             main_reference = f"HelloAsso {order['id']}"
-            if not paheko_client.transaction_exists(main_reference, year_id):
+            if not paheko_client.transaction_exists(main_reference):
                 logger.info("Transaction principale {} non trouvée", main_reference)
                 return False
 
             # Vérifier chaque ligne/item
             for item in order.get("items", []):
                 item_reference = f"HelloAsso {item['id']}"
-                if not paheko_client.transaction_exists(item_reference, year_id):
+                if not paheko_client.transaction_exists(item_reference):
                     logger.info("Transaction d'item {} non trouvée", item_reference)
                     return False
 
             # Vérifier l'existence des activités
+            # Même libellé que la synchronisation, recherche en lecture seule :
+            # get_activity créerait l'activité absente (issue #26).
             formSlug = order.get("formSlug")
             if formSlug:
-                activity = paheko_client.get_activity(
-                    formSlug, order.get("date"), order.get("formType")
-                )
+                activity_label = paheko_client._get_serviceLabel(order)
+                activity = paheko_client.find_activity(activity_label)
                 if not activity or not activity.get("id"):
-                    logger.info("Activité {} non trouvée", formSlug)
+                    logger.info("Activité {} non trouvée", activity_label)
                     return False
 
             return True
