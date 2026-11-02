@@ -521,7 +521,11 @@ class PahekoFaux:
     def transaction_exists(self, reference, year_id):
         return reference in self.transactions
 
-    def get_activity(self, form_slug, date_commande, form_type):
+    def _get_serviceLabel(self, commande):
+        return f"{commande['formType']} {commande['formSlug']}"
+
+    def find_activity(self, libelle):
+        self.libelle = libelle
         return self.activite
 
 

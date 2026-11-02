@@ -28,7 +28,10 @@ class PahekoFaux:
     def transaction_exists(self, reference, year_id):
         return True
 
-    def get_activity(self, form_slug, date_commande, form_type):
+    def _get_serviceLabel(self, commande):
+        return "Adhésion 2026"
+
+    def find_activity(self, libelle):
         return {"id": 2}
 
 
