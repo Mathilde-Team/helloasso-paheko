@@ -12,4 +12,7 @@
 
 ### Ajouté
 
+- Palier 4 de couverture (#5) : 57 tests sur le téléchargeur PDF Playwright
+  simulé et les utilitaires Paheko (initialisation, champs personnalisés,
+  catégories, services_users, structure de la base) ; `fail_under` 24 → 37.
 - Tests de non-régression des métadonnées, contraintes, verrou et commandes uv.

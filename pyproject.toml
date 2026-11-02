@@ -95,8 +95,12 @@ omit = ["tests/*", ".venv/*"]
 # (31/10/2026) : clients Paheko et HelloAsso (recherche de membres, retry HTTP,
 # catégories, journaux, transactions, get_sql direct SQLite, jetons OAuth2,
 # _make_request) par tests/test_palier2_clients.py — HelloassoPaheko.py
-# 7 % → 16 %. Seuil calé sur la mesure pour éviter toute régression,
+# 7 % → 16 %, puis palier 4 (02/11/2026) : HelloAssoPDFDownloader,
+# initialisation et utilitaires de PahekoAPIClient (champs personnalisés,
+# catégories, services_users, structure de la base) par
+# tests/test_palier4_paheko.py — total 25 % → 37,8 % (50,8 % avec le
+# palier 3 de la PR #23). Seuil calé sur la mesure pour éviter toute régression,
 # l'issue #5 le relève par paliers jusqu'à 95 % (lignes et branches).
-fail_under = 24
+fail_under = 37
 show_missing = true
 skip_covered = false
