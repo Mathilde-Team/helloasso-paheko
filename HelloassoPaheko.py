@@ -3091,10 +3091,14 @@ class HelloAssoHTTPClient:
                     f"{order["payer"]["lastName"].upper()} {order["payer"]["firstName"].capitalize()} ({order["payer"]["email"]})"
                 )
 
+            # Le bénéficiaire est porté par chaque item (une commande n'a pas
+            # de clé « user » à la racine) — issue #22.
             for item in order.get("items", []):
-                if item.get("user", {}).get("email"):
+                beneficiaire = item.get("user", {})
+                if beneficiaire.get("email"):
                     noms_to_check.add(
-                        f"{order["user"]["lastName"].upper()} {order["user"]["firstName"].capitalize()}"
+                        f"{beneficiaire.get('lastName', '').upper()} "
+                        f"{beneficiaire.get('firstName', '').capitalize()}"
                     )
 
             # Vérifier l'existence des membres
