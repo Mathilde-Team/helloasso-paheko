@@ -2,7 +2,25 @@
 
 ## [Non publié]
 
+### Corrigé
+
+- Une commande sans date ne fait plus planter toute la synchronisation :
+  repli sur la date du jour (#5).
+- Un item de type absent du mapping (Bonus, MonthlyDonation…) est ignoré
+  proprement au lieu de lever `AttributeError` sur `None.get` (#5).
+- `logger.debug("Service existant ID: {}")` levait `UnboundLocalError`
+  quand le service était créé : le message pointe désormais l'ID créé (#5).
+- `_sync_tarifs` : condition de mise à jour morte (`tarifs_unchanged`
+  jamais atteint) simplifiée (#5).
+
 ### Modifié
+
+- Palier 5 de couverture (issue #5) : la classe
+  `sync_helloasso_orders_and_transactions` (initialisation, références,
+  virements, exports JSON, vérifications, services, statistiques) et le
+  point d'entrée `__main__` sont couverts par
+  `tests/test_palier5_synchro.py`. Couverture globale 50,85 % → 92,44 %,
+  seuil `fail_under` relevé de 50 à 92.
 
 - Migration de Poetry vers uv : métadonnées PEP 621, contraintes Python et
   dépendances conservées, environnement verrouillé dans `uv.lock`, commandes

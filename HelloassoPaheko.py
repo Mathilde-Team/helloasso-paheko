@@ -5400,10 +5400,13 @@ class sync_helloasso_orders_and_transactions:
             logger.warning(jmodule.dumps(order, indent=4, ensure_ascii=False, default=str))
             payer = order.get("payer")
 
-            logger.debug("Traitement de la commande du {}", order.get("date"))
-            datetransaction = self.helloasso_client.convert_to_datetime(order.get("date"))
+            # Commande sans date : replier sur la date du jour (une commande
+            # sans date ne doit pas faire planter toute la synchronisation).
+            date_commande = order.get("date") or date.today().isoformat()
+            logger.debug("Traitement de la commande du {}", date_commande)
+            datetransaction = self.helloasso_client.convert_to_datetime(date_commande)
             date_inscription = self.helloasso_client.convert_to_datetime(
-                order.get("date")
+                date_commande
             ).strftime("%Y-%m-%d 00:00:00")
             id_year = self.paheko_client.get_current_year_id(
                 datetransaction, self.organization_slug
@@ -5665,10 +5668,11 @@ class sync_helloasso_orders_and_transactions:
                     mapping = order_mapping.get(item_type)
                     if not mapping:
                         logger.error(
-                            "Type de ligne inconnu '{}' dans la commande {}.",
+                            "Type de ligne inconnu '{}' dans la commande {} : item ignoré.",
                             item_type,
                             order.get("order_id"),
                         )
+                        continue
                     user = item.get("user")
 
                     # Si pas de user dans l'item, utiliser le payer de la commande
@@ -6547,7 +6551,7 @@ class sync_helloasso_orders_and_transactions:
                     f"Création du service: {serviceLabel} (du {start_date or 'N/A'} au {end_date or 'N/A'})"
                 )
                 service_id = self._create_service(serviceLabel, description, start_date, end_date)
-                logger.debug("Service existant ID: {} ", existing_service_id)
+                logger.debug("Service créé ID: {} ", service_id)
                 logger.debug("Service existant serviceLabel: {} ", serviceLabel)
             else:
                 service_id = -1
@@ -6611,8 +6615,6 @@ class sync_helloasso_orders_and_transactions:
                 needs_update = (
                     existing_tarif.get("description") != description
                     or existing_tarif.get("amount") != amount
-                    or price
-                    or min_amount
                 )
 
                 if needs_update:
