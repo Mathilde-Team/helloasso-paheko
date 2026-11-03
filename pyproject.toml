@@ -103,6 +103,6 @@ omit = ["tests/*", ".venv/*"]
 # tests/test_palier4_paheko.py — total 38,6 % → 50,9 %. Seuil calé sur la
 # mesure pour éviter toute régression, l'issue #5 le relève par paliers
 # jusqu'à 95 % (lignes et branches).
-fail_under = 50
+fail_under = 92
 show_missing = true
 skip_covered = false
