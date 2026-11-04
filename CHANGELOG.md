@@ -15,6 +15,14 @@
 
 ### Modifié
 
+- Palier 6 de couverture (issue #5) : chemins d'erreur de `PahekoAPIClient`
+  (retry HTTP, `get_activity`, `ensure_member_exists`, transactions,
+  `get_sql` direct) et branches restantes de la création forcée des
+  virements et des vérifications (réponses `{"data": …}`, année en erreur,
+  CSV vide ou latin-1) par `tests/test_palier6_couverture.py`. Couverture
+  globale 92,44 % → 95,84 %, seuil `fail_under` relevé de 92 à 95 (cible
+  de l'issue).
+
 - Palier 5 de couverture (issue #5) : la classe
   `sync_helloasso_orders_and_transactions` (initialisation, références,
   virements, exports JSON, vérifications, services, statistiques) et le
