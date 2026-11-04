@@ -102,7 +102,11 @@ omit = ["tests/*", ".venv/*"]
 # reste de PahekoAPIClient et HelloAssoPDFDownloader par
 # tests/test_palier4_paheko.py — total 38,6 % → 50,9 %. Seuil calé sur la
 # mesure pour éviter toute régression, l'issue #5 le relève par paliers
-# jusqu'à 95 % (lignes et branches).
-fail_under = 92
+# jusqu'à 95 % (lignes et branches). Palier 5 : classe de synchronisation et
+# __main__ (tests/test_palier5_synchro.py) — 50,9 % → 92,4 %. Palier 6
+# (04/11/2026) : chemins d'erreur de PahekoAPIClient et vérifications de la
+# synchronisation (tests/test_palier6_couverture.py) — 92,4 % → 95,8 %.
+# Cible de l'issue atteinte ; le seuil ne redescend plus.
+fail_under = 95
 show_missing = true
 skip_covered = false
