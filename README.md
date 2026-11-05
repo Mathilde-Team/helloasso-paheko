@@ -17,6 +17,14 @@ statements.
    uv sync --locked --python 3.13
    ```
 
+   Install the headless Chromium used to download the HelloAsso PDFs
+   (tickets, membership cards, payment receipts). Without it, the PDF
+   downloads are disabled for the run and a single error is logged:
+
+   ```sh
+   uv run playwright install chromium
+   ```
+
 2. Create local configuration files:
 
    ```sh

@@ -4,6 +4,11 @@
 
 ### Corrigé
 
+- Téléchargement des PDF : quand le navigateur ne démarre pas (Chromium non
+  installé), l'instance Playwright est arrêtée et les PDF sont désactivés
+  pour l'exécution, avec une seule erreur qui indique
+  `playwright install chromium`. Avant, chaque PDF suivant échouait avec
+  « Playwright Sync API inside the asyncio loop » (#38).
 - Une commande sans date ne fait plus planter toute la synchronisation :
   repli sur la date du jour (#5).
 - Un item de type absent du mapping (Bonus, MonthlyDonation…) est ignoré
