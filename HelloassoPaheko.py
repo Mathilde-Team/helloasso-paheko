@@ -73,21 +73,50 @@ class HelloAssoPDFDownloader:
         self.context: BrowserContext | None = None
         self.page: Page | None = None
         self.is_logged_in = False
+        # Raison de l'échec du lancement du navigateur : une fois renseignée,
+        # aucun nouveau lancement n'est tenté dans la même exécution (#38).
+        self.echec_lancement: str | None = None
 
     def start_browser(self):
-        """Lance le navigateur Playwright."""
+        """Lance le navigateur Playwright.
+
+        Si le lancement échoue (navigateur non installé…), l'instance Playwright
+        est arrêtée et l'état remis à zéro : sinon le lancement suivant relance
+        ``sync_playwright().start()`` par-dessus la première instance et échoue
+        avec « Playwright Sync API inside the asyncio loop » (#38). L'échec est
+        mémorisé : les appels suivants lèvent ``RuntimeError`` sans retenter.
+
+        :raises RuntimeError: Si un lancement précédent a échoué.
+        """
+        logger.debug("start_browser() called | navigateur_lance={}", self.browser is not None)
         if self.browser:
+            logger.debug("start_browser() returning | déjà lancé")
             return  # Déjà lancé
+        if self.echec_lancement:
+            logger.debug("start_browser() raising | échec précédent")
+            raise RuntimeError(f"Navigateur indisponible : {self.echec_lancement}")
 
         logger.info("🌐 Lancement du navigateur (headless)...")
-        self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=True)
-        self.context = self.browser.new_context(
-            viewport={"width": 1920, "height": 1080},
-            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        )
-        self.page = self.context.new_page()
+        try:
+            self.playwright = sync_playwright().start()
+            self.browser = self.playwright.chromium.launch(headless=True)
+            self.context = self.browser.new_context(
+                viewport={"width": 1920, "height": 1080},
+                user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            )
+            self.page = self.context.new_page()
+        except Exception as e:
+            self.echec_lancement = str(e).splitlines()[0][:200] if str(e) else type(e).__name__
+            logger.error(
+                "❌ Lancement du navigateur impossible : {} — PDF désactivés pour cette "
+                "exécution (navigateur absent ? lancer « playwright install chromium »)",
+                self.echec_lancement,
+            )
+            self.close()
+            logger.debug("start_browser() raising | échec du lancement")
+            raise
         logger.success("   ✓ Navigateur lancé")
+        logger.debug("start_browser() returning | navigateur lancé")
 
     def login(self):
         """Se connecte à HelloAsso via le formulaire web."""
@@ -174,6 +203,12 @@ class HelloAssoPDFDownloader:
             logger.debug("   📄 PDF déjà existant: {}", filename)
             return destination_path
 
+        if self.echec_lancement:
+            logger.debug(
+                "   PDF {} ignoré : navigateur indisponible ({})", filename, self.echec_lancement
+            )
+            return None
+
         logger.info("📥 Téléchargement: {}...", filename)
 
         try:
@@ -254,12 +289,33 @@ class HelloAssoPDFDownloader:
         return results
 
     def close(self):
-        """Ferme le navigateur proprement."""
+        """Ferme le navigateur proprement et remet l'état à zéro.
+
+        Une erreur de fermeture est journalisée sans être propagée : l'instance
+        Playwright est arrêtée dans tous les cas (#38).
+        """
+        logger.debug(
+            "close() called | navigateur={} playwright={}",
+            self.browser is not None,
+            self.playwright is not None,
+        )
         if self.browser:
-            self.browser.close()
-            logger.info("🔒 Navigateur fermé")
+            try:
+                self.browser.close()
+                logger.info("🔒 Navigateur fermé")
+            except Exception as e:  # noqa: BLE001 — fermeture au mieux, l'arrêt doit suivre
+                logger.warning("Fermeture du navigateur impossible : {}", e)
         if self.playwright:
-            self.playwright.stop()
+            try:
+                self.playwright.stop()
+            except Exception as e:  # noqa: BLE001 — arrêt au mieux, l'état est remis à zéro
+                logger.warning("Arrêt de Playwright impossible : {}", e)
+        self.playwright = None
+        self.browser = None
+        self.context = None
+        self.page = None
+        self.is_logged_in = False
+        logger.debug("close() returning")
 
 
 class PahekoAPIClient:
