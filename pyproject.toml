@@ -106,7 +106,9 @@ omit = ["tests/*", ".venv/*"]
 # __main__ (tests/test_palier5_synchro.py) — 50,9 % → 92,4 %. Palier 6
 # (04/11/2026) : chemins d'erreur de PahekoAPIClient et vérifications de la
 # synchronisation (tests/test_palier6_couverture.py) — 92,4 % → 95,8 %.
-# Cible de l'issue atteinte ; le seuil ne redescend plus.
+# La mesure combinée du palier 6 masquait des branches non testées.
+# Le palier 7 vérifie les deux axes indépendamment via make test.
+# Le seuil ne redescend plus.
 fail_under = 95
 show_missing = true
 skip_covered = false

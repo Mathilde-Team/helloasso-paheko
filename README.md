@@ -82,7 +82,7 @@ Ce dépôt suit le [socle qualité de l'équipe](https://github.com/Mathilde-Tea
 - **Protections versionnées** : `.github/branch-protection/{main,dev}.json`, vérifiées chaque jour par le workflow « Protection des branches ». Un administrateur les applique via `scripts/appliquer_socle.sh Mathilde-Team/helloasso-paheko`.
 - **Licence** : [GPL-3.0-or-later](LICENSE) (SOCLE §1) : `license = "GPL-3.0-or-later"` dans `pyproject.toml`, en-tête `# SPDX-License-Identifier: GPL-3.0-or-later` en tête de chaque fichier de code, de `scripts/` et de `tests/`.
 - **Version** : déclarée une seule fois, dans `pyproject.toml`, tag `vX.Y.Z` au commit de release.
-- **Couverture des tests** : seuil bloquant de **95 %**, branches comprises (décision d'équipe du 21/10/2026, [.github#9](https://github.com/Mathilde-Team/.github/issues/9)). Dépôt existant sans test : le seuil part de la mesure du jour dans `pyproject.toml` (`[tool.coverage.report] fail_under`) et monte à chaque PR de tests (issue #5) jusqu'à 95.
+- **Couverture des tests** : seuil bloquant de **95 % sur les lignes et de 95 % sur les branches**, vérifiés séparément sans arrondi (décision d'équipe du 21/10/2026, [.github#9](https://github.com/Mathilde-Team/.github/issues/9)). Lancer `make test`, comme en CI : pytest produit `coverage.json`, puis `scripts/verifier_couverture.py` contrôle les deux axes avec le seuil unique de `pyproject.toml` (`[tool.coverage.report] fail_under`). Une moyenne combinée supérieure à 95 % ne suffit pas.
 
 ### Journalisation Python (SOCLE §8)
 
