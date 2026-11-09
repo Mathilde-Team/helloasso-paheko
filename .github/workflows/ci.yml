@@ -44,10 +44,7 @@ jobs:
       - name: Syntaxe des scripts Python
         run: uv run --locked --python 3.13 python -m py_compile scripts/*.py
 
-      # Tests et couverture (SOCLE.md §4) : branches comprises (branch = true
-      # dans pyproject.toml). Le palier existant n'est pas abaissé par la
-      # migration ; l'issue #5 le relève par paliers jusqu'à 95 %.
+      # Les lignes et les branches sont vérifiées séparément, sans arrondi.
+      # Le seuil unique reste celui de pyproject.toml.
       - name: Tests et couverture (seuil lu dans pyproject.toml)
-        run: >
-          uv run --locked --python 3.13
-          pytest --cov --cov-report=term-missing
+        run: make test
